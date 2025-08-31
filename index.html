@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Sign Recognizer by Andrew</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+            padding: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 5px;
+                padding: 15px;
+                border-radius: 15px;
+            }
+        }
+        
+        .video-container {
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .video-feed {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+        }
+        
+        @media (max-width: 768px) {
+            .video-feed {
+                height: 250px;
+            }
+            .video-container {
+                min-height: 250px;
+            }
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .status-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .btn-custom {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .prediction-display {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            color: #2563eb;
+            margin: 20px 0;
+        }
+        
+        .word-display {
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: center;
+            color: #059669;
+            margin: 20px 0;
+            min-height: 60px;
+        }
+        
+        @media (max-width: 768px) {
+            .prediction-display {
+                font-size: 2.5rem;
+                margin: 15px 0;
+            }
+            
+            .word-display {
+                font-size: 1.5rem;
+                margin: 15px 0;
+                min-height: 50px;
+            }
+        }
+        
+        .progress-custom {
+            height: 10px;
+            border-radius: 5px;
+        }
+        
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .analytics-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin: 15px 0;
+            }
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        
+        @media (max-width: 768px) {
+            .metric-value {
+                font-size: 1.5rem;
+            }
+            
+            .metric-label {
+                font-size: 0.8rem;
+            }
+        }
+        
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .debug-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        
+        @media (max-width: 768px) {
+            .debug-info {
+                padding: 15px;
+                margin: 15px 0;
+            }
+            
+            .debug-info h5 {
+                font-size: 1.1rem;
+                margin-bottom: 10px;
+            }
+            
+            .debug-info p {
+                font-size: 0.85rem;
+                margin-bottom: 6px;
+            }
+        }
+        
+        .debug-info h5 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+        
+        .debug-info p {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .debug-info strong {
+            color: #495057;
+        }
+        
+        .status-indicator {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .status-indicator {
+                padding: 3px 6px;
+                font-size: 0.7rem;
+            }
+            
+            .btn-custom {
+                padding: 8px 20px;
+                font-size: 0.9rem;
+            }
+            
+            .control-panel {
+                padding: 15px;
+                margin: 15px 0;
+            }
+            
+            .status-card {
+                padding: 12px;
+                margin: 8px 0;
+            }
+        }
+        
+        .status-ok { background: #d4edda; color: #155724; }
+        .status-error { background: #f8d7da; color: #721c24; }
+        .status-warning { background: #fff3cd; color: #856404; }
+        .status-info { background: #d1ecf1; color: #0c5460; }
+        
+        /* Mobile-specific improvements */
+        @media (max-width: 576px) {
+            .display-4 {
+                font-size: 2rem;
+            }
+            
+            .lead {
+                font-size: 1rem;
+            }
+            
+            .alert {
+                padding: 0.75rem;
+                margin-bottom: 1rem;
+            }
+            
+            .alert h5, .alert h6 {
+                font-size: 1rem;
+            }
+            
+            .alert p, .alert ul {
+                font-size: 0.9rem;
+            }
+            
+            .btn-custom {
+                padding: 6px 15px;
+                font-size: 0.8rem;
+            }
+            
+            .metric-card {
+                padding: 10px;
+            }
+            
+            .metric-value {
+                font-size: 1.2rem;
+            }
+            
+            .metric-label {
+                font-size: 0.7rem;
+            }
+        }
+        
+        .camera-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: white;
+            text-align: center;
+        }
+        
+        .camera-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.7;
+        }
+        
+        .demo-mode {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h1 class="display-4 fw-bold text-primary">
+                        <i class="fas fa-hands"></i> Hand Sign Recognizer by Andrew
+                    </h1>
+                    <p class="lead text-muted">Professional Web Edition - GitHub Pages Demo</p>
+                    
+                    <!-- Welcome Message -->
+                    <div class="alert alert-info" role="alert">
+                        <h5><i class="fas fa-lightbulb"></i> Welcome to Hand Sign Recognition!</h5>
+                        <p class="mb-2">This application uses AI to recognize American Sign Language (ASL) alphabet signs in real-time.</p>
+                        <p class="mb-0"><strong>Demo Mode:</strong> This is a static demo version. For full functionality, download and run the complete application locally.</p>
+                    </div>
+                    
+                    <!-- Mobile Instructions -->
+                    <div class="alert alert-warning d-md-none" role="alert">
+                        <h6><i class="fas fa-mobile-alt"></i> Mobile Tips:</h6>
+                        <ul class="mb-0 small">
+                            <li>Hold your phone in landscape mode for better view</li>
+                            <li>Ensure good lighting for accurate recognition</li>
+                            <li>Keep your hand clearly visible in the camera</li>
+                            <li>Use the controls below to switch modes</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- GitHub Demo Notice -->
+                    <div class="alert alert-success" role="alert">
+                        <h6><i class="fab fa-github"></i> GitHub Pages Demo</h6>
+                        <p class="mb-2">This is a demonstration version hosted on GitHub Pages. For the full interactive experience with camera functionality:</p>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="https://github.com/yourusername/hand-sign-recognizer" class="btn btn-outline-primary btn-sm">
+                                <i class="fab fa-github"></i> View on GitHub
+                            </a>
+                            <a href="#" class="btn btn-outline-success btn-sm" onclick="downloadProject()">
+                                <i class="fas fa-download"></i> Download Full Project
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Video Feed -->
+                <div class="col-lg-8">
+                    <div class="video-container">
+                        <div class="camera-placeholder">
+                            <i class="fas fa-camera"></i>
+                            <h4>Camera Feed</h4>
+                            <p>Demo Mode - Camera functionality requires local server</p>
+                            <div class="demo-mode p-3 rounded">
+                                <small>🎥 Real-time hand sign recognition demo</small>
+                            </div>
+                        </div>
+                        <div class="position-absolute top-0 start-0 m-3">
+                            <span id="statusIndicator" class="badge bg-success fs-6">
+                                <i class="fas fa-circle"></i> Demo Mode
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Prediction Display -->
+                    <div class="prediction-display" id="predictionDisplay">
+                        A
+                    </div>
+                    
+                    <!-- Word Display -->
+                    <div class="word-display" id="wordDisplay">
+                        HELLO WORLD
+                    </div>
+                    
+                    <!-- Debug Information -->
+                    <div class="debug-info">
+                        <h5><i class="fas fa-info-circle"></i> Demo Information</h5>
+                        <div class="row">
+                            <div class="col-md-6 col-12">
+                                <p><strong>Camera Status:</strong> <span id="cameraStatus" class="status-indicator status-info">Demo Mode</span></p>
+                                <p><strong>Connection Status:</strong> <span id="connectionStatus" class="status-indicator status-warning">Static Demo</span></p>
+                                <p><strong>Frame Count:</strong> <span id="frameCount">Demo</span></p>
+                                <p><strong>Last Update:</strong> <span id="lastUpdate">--</span></p>
+                            </div>
+                            <div class="col-md-6 col-12">
+                                <p><strong>Model Status:</strong> <span id="modelStatus" class="status-indicator status-info">Demo Mode</span></p>
+                                <p><strong>Processing Time:</strong> <span id="processingTime">--</span></p>
+                                <p><strong>Data Size:</strong> <span id="dataSize">Demo</span></p>
+                                <p><strong>Errors:</strong> <span id="errorCount">0</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Control Panel -->
+                <div class="col-lg-4">
+                    <div class="control-panel">
+                        <h4 class="mb-3">
+                            <i class="fas fa-gamepad"></i> Controls
+                        </h4>
+                        
+                        <div class="d-grid gap-2 mb-3">
+                            <button class="btn btn-primary btn-custom" onclick="setMode('predict')">
+                                <i class="fas fa-eye"></i> <span class="d-none d-sm-inline">Predict Mode</span><span class="d-sm-none">Predict</span>
+                            </button>
+                            <button class="btn btn-success btn-custom" onclick="setMode('record')">
+                                <i class="fas fa-record-vinyl"></i> <span class="d-none d-sm-inline">Record Mode</span><span class="d-sm-none">Record</span>
+                            </button>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mb-3">
+                            <button class="btn btn-warning btn-custom" onclick="trainModel()">
+                                <i class="fas fa-brain"></i> <span class="d-none d-sm-inline">Train Model</span><span class="d-sm-none">Train</span>
+                            </button>
+                            <button class="btn btn-danger btn-custom" onclick="clearWord()">
+                                <i class="fas fa-eraser"></i> <span class="d-none d-sm-inline">Clear Word</span><span class="d-sm-none">Clear</span>
+                            </button>
+                        </div>
+                        
+                        <div class="status-card">
+                            <h6><i class="fas fa-info-circle"></i> Current Status</h6>
+                            <p class="mb-1">Mode: <span id="currentMode" class="fw-bold">Demo</span></p>
+                            <p class="mb-1">Letter: <span id="currentLetter" class="fw-bold">A</span></p>
+                            <p class="mb-0">Samples: <span id="sampleCount" class="fw-bold">Demo</span></p>
+                        </div>
+                        
+                        <div class="status-card">
+                            <h6><i class="fas fa-cogs"></i> System Status</h6>
+                            <p class="mb-1">Camera: <span id="cameraStatusSmall" class="fw-bold text-info">Demo Mode</span></p>
+                            <p class="mb-1">Connection: <span id="connectionStatusSmall" class="fw-bold text-warning">Static Demo</span></p>
+                            <p class="mb-1">Model: <span id="modelStatusSmall" class="fw-bold text-info">Demo Mode</span></p>
+                            <p class="mb-0">Frames: <span id="frameCountSmall" class="fw-bold">Demo</span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Analytics -->
+                    <div class="analytics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value" id="fpsValue">30.0</div>
+                            <div class="metric-label">FPS</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="confidenceValue">85%</div>
+                            <div class="metric-label">Confidence</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="accuracyValue">92%</div>
+                            <div class="metric-label">Accuracy</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="durationValue">0:15</div>
+                            <div class="metric-label">Duration</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bars -->
+                    <div class="status-card">
+                        <h6><i class="fas fa-chart-line"></i> Progress</h6>
+                        <div class="mb-2">
+                            <label class="small">Confidence</label>
+                            <div class="progress progress-custom">
+                                <div id="confidenceProgress" class="progress-bar bg-primary" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small">Training Progress</label>
+                            <div class="progress progress-custom">
+                                <div id="trainingProgress" class="progress-bar bg-success" style="width: 75%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentWord = 'HELLO WORLD';
+        let frameCount = 0;
+        let errorCount = 0;
+        let startTime = Date.now();
+        let demoInterval;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDemo();
+            updateStatus();
+            setInterval(updateStatus, 2000);
+        });
+        
+        function initializeDemo() {
+            console.log('Initializing demo mode...');
+            
+            // Update last update time
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+            
+            // Start demo animation
+            demoInterval = setInterval(function() {
+                frameCount++;
+                document.getElementById('frameCount').textContent = frameCount;
+                document.getElementById('frameCountSmall').textContent = frameCount;
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                
+                // Simulate some demo data
+                if (frameCount % 30 === 0) {
+                    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                    const randomLetter = letters[Math.floor(Math.random() * letters.length)];
+                    document.getElementById('predictionDisplay').textContent = randomLetter;
+                    document.getElementById('currentLetter').textContent = randomLetter;
+                }
+            }, 100);
+        }
+        
+        function updateStatusIndicator(status) {
+            const indicator = document.getElementById('statusIndicator');
+            const icon = indicator.querySelector('i');
+            
+            switch(status) {
+                case 'ready':
+                    indicator.className = 'badge bg-success fs-6';
+                    icon.className = 'fas fa-circle';
+                    break;
+                case 'recording':
+                    indicator.className = 'badge bg-danger fs-6';
+                    icon.className = 'fas fa-circle';
+                    break;
+                case 'predicting':
+                    indicator.className = 'badge bg-primary fs-6';
+                    icon.className = 'fas fa-circle';
+                    break;
+                case 'training':
+                    indicator.className = 'badge bg-warning fs-6';
+                    icon.className = 'fas fa-circle';
+                    break;
+                case 'error':
+                    indicator.className = 'badge bg-danger fs-6';
+                    icon.className = 'fas fa-exclamation-triangle';
+                    break;
+                case 'demo':
+                    indicator.className = 'badge bg-info fs-6';
+                    icon.className = 'fas fa-play';
+                    break;
+            }
+        }
+        
+        async function updateStatus() {
+            // Update processing time
+            const elapsed = (Date.now() - startTime) / 1000;
+            document.getElementById('processingTime').textContent = elapsed.toFixed(1) + 's';
+            
+            // Simulate some demo analytics
+            const fps = 25 + Math.random() * 10;
+            const confidence = 70 + Math.random() * 20;
+            const accuracy = 85 + Math.random() * 10;
+            
+            document.getElementById('fpsValue').textContent = fps.toFixed(1);
+            document.getElementById('confidenceValue').textContent = Math.round(confidence) + '%';
+            document.getElementById('accuracyValue').textContent = Math.round(accuracy) + '%';
+            document.getElementById('confidenceProgress').style.width = confidence + '%';
+            
+            const duration = Math.floor(elapsed);
+            const minutes = Math.floor(duration / 60);
+            const seconds = duration % 60;
+            document.getElementById('durationValue').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function setMode(mode) {
+            document.getElementById('currentMode').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+            updateStatusIndicator(mode === 'predict' ? 'predicting' : 'recording');
+            
+            // Show demo message
+            alert('Demo Mode: This would switch to ' + mode + ' mode in the full application.');
+        }
+        
+        function trainModel() {
+            updateStatusIndicator('training');
+            setTimeout(() => {
+                updateStatusIndicator('demo');
+                alert('Demo Mode: Model training simulation complete!');
+            }, 2000);
+        }
+        
+        function clearWord() {
+            currentWord = '';
+            document.getElementById('wordDisplay').textContent = 'Start signing...';
+            alert('Demo Mode: Word cleared!');
+        }
+        
+        function downloadProject() {
+            alert('Demo Mode: This would download the full project files. Please visit the GitHub repository for the complete application.');
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            switch(event.key.toLowerCase()) {
+                case 'r':
+                    setMode('record');
+                    break;
+                case 'p':
+                    setMode('predict');
+                    break;
+                case 't':
+                    trainModel();
+                    break;
+                case 'c':
+                    clearWord();
+                    break;
+                case ' ':
+                    // Commit current prediction
+                    const prediction = document.getElementById('predictionDisplay').textContent;
+                    if (prediction && prediction !== '--') {
+                        currentWord += prediction;
+                        document.getElementById('wordDisplay').textContent = currentWord;
+                    }
+                    break;
+                case 'backspace':
+                    if (currentWord.length > 0) {
+                        currentWord = currentWord.slice(0, -1);
+                        document.getElementById('wordDisplay').textContent = currentWord || 'Start signing...';
+                    }
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
